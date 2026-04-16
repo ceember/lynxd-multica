@@ -932,6 +932,114 @@ func TestReuseRestoresCodexHome(t *testing.T) {
 	}
 }
 
+func TestReusePreservesCodexHomeContents(t *testing.T) {
+	// Cannot use t.Parallel() with t.Setenv.
+
+	sharedHome := t.TempDir()
+	t.Setenv("CODEX_HOME", sharedHome)
+
+	workspacesRoot := t.TempDir()
+
+	env, err := Prepare(PrepareParams{
+		WorkspacesRoot: workspacesRoot,
+		WorkspaceID:    "ws-codex-preserve",
+		TaskID:         "f6a7b8c9-d0e1-2345-fabc-678901234567",
+		AgentName:      "Codex Agent",
+		Provider:       "codex",
+		Task:           TaskContextForEnv{IssueID: "preserve-test"},
+	}, testLogger())
+	if err != nil {
+		t.Fatalf("Prepare failed: %v", err)
+	}
+	defer env.Cleanup(true)
+
+	// Simulate Codex-internal state accumulated during the first task
+	// (e.g. rollouts, per-session cache that should survive into the next task).
+	sentinel := filepath.Join(env.CodexHome, "rollouts", "session.jsonl")
+	if err := os.MkdirAll(filepath.Dir(sentinel), 0o755); err != nil {
+		t.Fatalf("mkdir sentinel dir: %v", err)
+	}
+	if err := os.WriteFile(sentinel, []byte("session-1-data"), 0o644); err != nil {
+		t.Fatalf("write sentinel: %v", err)
+	}
+
+	// Also modify config.toml — a user-supplied edit must survive reuse.
+	configPath := filepath.Join(env.CodexHome, "config.toml")
+	configBefore, err := os.ReadFile(configPath)
+	if err != nil {
+		t.Fatalf("read config.toml: %v", err)
+	}
+	customConfig := string(configBefore) + "\nmodel_reasoning_effort = \"high\"\n"
+	if err := os.WriteFile(configPath, []byte(customConfig), 0o644); err != nil {
+		t.Fatalf("write config.toml: %v", err)
+	}
+
+	reused := Reuse(env.WorkDir, "codex", TaskContextForEnv{IssueID: "preserve-test"}, testLogger())
+	if reused == nil {
+		t.Fatal("Reuse returned nil")
+	}
+	if reused.CodexHome != env.CodexHome {
+		t.Errorf("CodexHome = %q, want %q", reused.CodexHome, env.CodexHome)
+	}
+
+	// Sentinel state from the previous task must still exist untouched.
+	data, err := os.ReadFile(sentinel)
+	if err != nil {
+		t.Fatalf("sentinel gone after Reuse: %v", err)
+	}
+	if string(data) != "session-1-data" {
+		t.Errorf("sentinel content = %q, want %q", data, "session-1-data")
+	}
+
+	// User edits to config.toml must survive reuse (no re-prepare overwrite).
+	configAfter, err := os.ReadFile(configPath)
+	if err != nil {
+		t.Fatalf("read config.toml after reuse: %v", err)
+	}
+	if string(configAfter) != customConfig {
+		t.Errorf("config.toml was modified by Reuse; got:\n%s", configAfter)
+	}
+}
+
+func TestReuseSeedsCodexHomeIfMissing(t *testing.T) {
+	// Cannot use t.Parallel() with t.Setenv.
+
+	sharedHome := t.TempDir()
+	t.Setenv("CODEX_HOME", sharedHome)
+
+	workspacesRoot := t.TempDir()
+
+	env, err := Prepare(PrepareParams{
+		WorkspacesRoot: workspacesRoot,
+		WorkspaceID:    "ws-codex-missing",
+		TaskID:         "a7b8c9d0-e1f2-3456-abcd-789012345678",
+		AgentName:      "Codex Agent",
+		Provider:       "codex",
+		Task:           TaskContextForEnv{IssueID: "missing-test"},
+	}, testLogger())
+	if err != nil {
+		t.Fatalf("Prepare failed: %v", err)
+	}
+	defer env.Cleanup(true)
+
+	// Simulate the codex-home being wiped (e.g. manual cleanup or older env
+	// that predates codex-home). Reuse should re-seed it cleanly.
+	if err := os.RemoveAll(env.CodexHome); err != nil {
+		t.Fatalf("remove codex-home: %v", err)
+	}
+
+	reused := Reuse(env.WorkDir, "codex", TaskContextForEnv{IssueID: "missing-test"}, testLogger())
+	if reused == nil {
+		t.Fatal("Reuse returned nil")
+	}
+	if reused.CodexHome == "" {
+		t.Fatal("expected CodexHome to be re-seeded")
+	}
+	if _, err := os.Stat(filepath.Join(reused.CodexHome, "config.toml")); err != nil {
+		t.Errorf("expected config.toml in re-seeded codex-home: %v", err)
+	}
+}
+
 func TestEnsureSymlinkRepairsBrokenLink(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()

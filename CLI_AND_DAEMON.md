@@ -154,6 +154,14 @@ You need at least one installed. The daemon registers each detected CLI as an av
 4. Heartbeats are sent periodically (default: 15s) so the server knows the daemon is alive
 5. On shutdown, all runtimes are deregistered
 
+### Task Isolation
+
+Each issue — not each task — owns a persistent workspace directory under `MULTICA_WORKSPACES_ROOT`.
+
+- **workdir** (`{root}/{task-short-id}/workdir`) is created on the first task and reused by subsequent tasks on the same `(agent, issue)` pair via `PriorWorkDir`. Repo checkouts and local edits survive across comments.
+- **Session** (Claude) is resumed via `PriorSessionID`, so the conversation context carries forward.
+- **`CODEX_HOME`** (Codex) lives at `{root}/{task-short-id}/codex-home` and is **reused as-is across tasks on the same issue**. The daemon does not re-run the seeding step on reuse — Codex's rollouts, per-session cache, and any user edits to `config.toml` are preserved. A fresh `CODEX_HOME` is only created when a brand-new issue starts or the prior workdir no longer exists.
+
 ### Configuration
 
 Daemon behavior is configured via flags or environment variables:

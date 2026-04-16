@@ -143,13 +143,18 @@ func Reuse(workDir, provider string, task TaskContextForEnv, logger *slog.Logger
 		logger.Warn("execenv: refresh context files failed", "error", err)
 	}
 
-	// Restore CodexHome for Codex provider — the per-task codex-home directory
-	// lives alongside the workdir. Re-run prepareCodexHome to ensure config
-	// (especially network access) is up to date.
+	// Restore CodexHome for Codex provider — the codex-home directory lives
+	// alongside the workdir and is reused as-is across tasks on the same issue.
+	// Re-running prepareCodexHome here would churn Codex's accumulated state
+	// (rollouts, per-session cache) and make users feel the sandbox is being
+	// re-initialized on every new comment. If the directory is missing (older
+	// env, manual cleanup) we seed it fresh.
 	if provider == "codex" {
 		codexHome := filepath.Join(env.RootDir, "codex-home")
-		if err := prepareCodexHome(codexHome, logger); err != nil {
-			logger.Warn("execenv: refresh codex-home failed", "error", err)
+		if _, err := os.Stat(codexHome); err == nil {
+			env.CodexHome = codexHome
+		} else if err := prepareCodexHome(codexHome, logger); err != nil {
+			logger.Warn("execenv: prepare codex-home on reuse failed", "error", err)
 		} else {
 			env.CodexHome = codexHome
 		}
