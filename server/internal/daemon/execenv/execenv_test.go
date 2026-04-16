@@ -932,10 +932,15 @@ func TestReuseRestoresCodexHome(t *testing.T) {
 	}
 }
 
-func TestReusePreservesCodexHomeContents(t *testing.T) {
+// TestReuseIsIdempotentForCodexHome locks in the contract that Reuse() does
+// not churn Codex state that accumulates across tasks on the same issue —
+// user-level edits to config.toml, rollouts, per-session cache — even though
+// prepareCodexHome runs on every reuse for self-healing.
+func TestReuseIsIdempotentForCodexHome(t *testing.T) {
 	// Cannot use t.Parallel() with t.Setenv.
 
 	sharedHome := t.TempDir()
+	os.WriteFile(filepath.Join(sharedHome, "auth.json"), []byte(`{"token":"v1"}`), 0o644)
 	t.Setenv("CODEX_HOME", sharedHome)
 
 	workspacesRoot := t.TempDir()
@@ -954,7 +959,7 @@ func TestReusePreservesCodexHomeContents(t *testing.T) {
 	defer env.Cleanup(true)
 
 	// Simulate Codex-internal state accumulated during the first task
-	// (e.g. rollouts, per-session cache that should survive into the next task).
+	// (rollouts / per-session cache) and a user edit to config.toml.
 	sentinel := filepath.Join(env.CodexHome, "rollouts", "session.jsonl")
 	if err := os.MkdirAll(filepath.Dir(sentinel), 0o755); err != nil {
 		t.Fatalf("mkdir sentinel dir: %v", err)
@@ -962,8 +967,6 @@ func TestReusePreservesCodexHomeContents(t *testing.T) {
 	if err := os.WriteFile(sentinel, []byte("session-1-data"), 0o644); err != nil {
 		t.Fatalf("write sentinel: %v", err)
 	}
-
-	// Also modify config.toml — a user-supplied edit must survive reuse.
 	configPath := filepath.Join(env.CodexHome, "config.toml")
 	configBefore, err := os.ReadFile(configPath)
 	if err != nil {
@@ -982,7 +985,6 @@ func TestReusePreservesCodexHomeContents(t *testing.T) {
 		t.Errorf("CodexHome = %q, want %q", reused.CodexHome, env.CodexHome)
 	}
 
-	// Sentinel state from the previous task must still exist untouched.
 	data, err := os.ReadFile(sentinel)
 	if err != nil {
 		t.Fatalf("sentinel gone after Reuse: %v", err)
@@ -991,7 +993,6 @@ func TestReusePreservesCodexHomeContents(t *testing.T) {
 		t.Errorf("sentinel content = %q, want %q", data, "session-1-data")
 	}
 
-	// User edits to config.toml must survive reuse (no re-prepare overwrite).
 	configAfter, err := os.ReadFile(configPath)
 	if err != nil {
 		t.Fatalf("read config.toml after reuse: %v", err)
@@ -1001,42 +1002,91 @@ func TestReusePreservesCodexHomeContents(t *testing.T) {
 	}
 }
 
-func TestReuseSeedsCodexHomeIfMissing(t *testing.T) {
+// TestReuseHealsCorruptedCodexHome guards the self-heal contract: if an
+// existing codex-home is partially corrupt (missing sessions symlink, broken
+// auth.json link, missing config.toml) the next task claim must repair it
+// instead of silently failing.
+func TestReuseHealsCorruptedCodexHome(t *testing.T) {
 	// Cannot use t.Parallel() with t.Setenv.
 
 	sharedHome := t.TempDir()
+	os.WriteFile(filepath.Join(sharedHome, "auth.json"), []byte(`{"token":"secret"}`), 0o644)
 	t.Setenv("CODEX_HOME", sharedHome)
 
 	workspacesRoot := t.TempDir()
 
 	env, err := Prepare(PrepareParams{
 		WorkspacesRoot: workspacesRoot,
-		WorkspaceID:    "ws-codex-missing",
+		WorkspaceID:    "ws-codex-heal",
 		TaskID:         "a7b8c9d0-e1f2-3456-abcd-789012345678",
 		AgentName:      "Codex Agent",
 		Provider:       "codex",
-		Task:           TaskContextForEnv{IssueID: "missing-test"},
+		Task:           TaskContextForEnv{IssueID: "heal-test"},
 	}, testLogger())
 	if err != nil {
 		t.Fatalf("Prepare failed: %v", err)
 	}
 	defer env.Cleanup(true)
 
-	// Simulate the codex-home being wiped (e.g. manual cleanup or older env
-	// that predates codex-home). Reuse should re-seed it cleanly.
-	if err := os.RemoveAll(env.CodexHome); err != nil {
-		t.Fatalf("remove codex-home: %v", err)
+	// Simulate partial corruption of the persisted codex-home:
+	// - sessions symlink removed
+	// - auth.json repointed at a non-existent path (broken link)
+	// - config.toml deleted
+	sessionsPath := filepath.Join(env.CodexHome, "sessions")
+	if err := os.Remove(sessionsPath); err != nil {
+		t.Fatalf("remove sessions: %v", err)
+	}
+	authPath := filepath.Join(env.CodexHome, "auth.json")
+	if err := os.Remove(authPath); err != nil {
+		t.Fatalf("remove auth.json: %v", err)
+	}
+	if err := os.Symlink(filepath.Join(sharedHome, "missing.json"), authPath); err != nil {
+		t.Fatalf("write broken auth.json symlink: %v", err)
+	}
+	configPath := filepath.Join(env.CodexHome, "config.toml")
+	if err := os.Remove(configPath); err != nil {
+		t.Fatalf("remove config.toml: %v", err)
 	}
 
-	reused := Reuse(env.WorkDir, "codex", TaskContextForEnv{IssueID: "missing-test"}, testLogger())
+	reused := Reuse(env.WorkDir, "codex", TaskContextForEnv{IssueID: "heal-test"}, testLogger())
 	if reused == nil {
 		t.Fatal("Reuse returned nil")
 	}
-	if reused.CodexHome == "" {
-		t.Fatal("expected CodexHome to be re-seeded")
+	if reused.CodexHome != env.CodexHome {
+		t.Errorf("CodexHome = %q, want %q", reused.CodexHome, env.CodexHome)
 	}
-	if _, err := os.Stat(filepath.Join(reused.CodexHome, "config.toml")); err != nil {
-		t.Errorf("expected config.toml in re-seeded codex-home: %v", err)
+
+	// sessions should be re-linked to the shared dir.
+	fi, err := os.Lstat(sessionsPath)
+	if err != nil {
+		t.Fatalf("sessions not restored: %v", err)
+	}
+	if fi.Mode()&os.ModeSymlink == 0 {
+		t.Error("sessions should be a symlink after heal")
+	}
+	if target, _ := os.Readlink(sessionsPath); target != filepath.Join(sharedHome, "sessions") {
+		t.Errorf("sessions target = %q, want %q", target, filepath.Join(sharedHome, "sessions"))
+	}
+
+	// auth.json should point at the real shared auth.json again.
+	if target, _ := os.Readlink(authPath); target != filepath.Join(sharedHome, "auth.json") {
+		t.Errorf("auth.json target = %q, want %q", target, filepath.Join(sharedHome, "auth.json"))
+	}
+	data, err := os.ReadFile(authPath)
+	if err != nil {
+		t.Fatalf("auth.json unreadable after heal: %v", err)
+	}
+	if string(data) != `{"token":"secret"}` {
+		t.Errorf("auth.json content = %q", data)
+	}
+
+	// config.toml should be recreated with network access enabled.
+	data, err = os.ReadFile(configPath)
+	if err != nil {
+		t.Fatalf("config.toml not restored: %v", err)
+	}
+	if !strings.Contains(string(data), "network_access = true") {
+		t.Errorf("restored config.toml missing network_access = true; got:\n%s", data)
 	}
 }
 

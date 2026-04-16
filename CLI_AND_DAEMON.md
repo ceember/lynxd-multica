@@ -160,7 +160,7 @@ Each issue — not each task — owns a persistent workspace directory under `MU
 
 - **workdir** (`{root}/{task-short-id}/workdir`) is created on the first task and reused by subsequent tasks on the same `(agent, issue)` pair via `PriorWorkDir`. Repo checkouts and local edits survive across comments.
 - **Session** (Claude) is resumed via `PriorSessionID`, so the conversation context carries forward.
-- **`CODEX_HOME`** (Codex) lives at `{root}/{task-short-id}/codex-home` and is **reused as-is across tasks on the same issue**. The daemon does not re-run the seeding step on reuse — Codex's rollouts, per-session cache, and any user edits to `config.toml` are preserved. A fresh `CODEX_HOME` is only created when a brand-new issue starts or the prior workdir no longer exists.
+- **`CODEX_HOME`** (Codex) lives at `{root}/{task-short-id}/codex-home` alongside the workdir and is **reused across tasks on the same issue**. The daemon re-runs its seeding step on every reuse, but the step is idempotent: broken `auth.json` / `sessions` symlinks and a missing `config.toml` are repaired, while existing content — user edits to `config.toml`, Codex's rollouts, and the per-session cache — is left untouched. A fresh `CODEX_HOME` is created only when a brand-new issue starts.
 
 ### Configuration
 

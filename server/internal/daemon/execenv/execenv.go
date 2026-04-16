@@ -144,17 +144,19 @@ func Reuse(workDir, provider string, task TaskContextForEnv, logger *slog.Logger
 	}
 
 	// Restore CodexHome for Codex provider — the codex-home directory lives
-	// alongside the workdir and is reused as-is across tasks on the same issue.
-	// Re-running prepareCodexHome here would churn Codex's accumulated state
-	// (rollouts, per-session cache) and make users feel the sandbox is being
-	// re-initialized on every new comment. If the directory is missing (older
-	// env, manual cleanup) we seed it fresh.
+	// alongside the workdir and is reused across tasks on the same issue.
+	// prepareCodexHome is deliberately idempotent: it only (re)creates broken
+	// or missing symlinks (auth.json, sessions), copies config files when the
+	// destination is absent, and leaves existing content — including user
+	// edits to config.toml and Codex's accumulated rollouts / per-session
+	// cache — untouched. Running it on every reuse therefore gives us a cheap
+	// self-heal path when something in the env has been corrupted, without
+	// churning the state that makes the per-issue reuse useful in the first
+	// place.
 	if provider == "codex" {
 		codexHome := filepath.Join(env.RootDir, "codex-home")
-		if _, err := os.Stat(codexHome); err == nil {
-			env.CodexHome = codexHome
-		} else if err := prepareCodexHome(codexHome, logger); err != nil {
-			logger.Warn("execenv: prepare codex-home on reuse failed", "error", err)
+		if err := prepareCodexHome(codexHome, logger); err != nil {
+			logger.Warn("execenv: refresh codex-home failed", "error", err)
 		} else {
 			env.CodexHome = codexHome
 		}
