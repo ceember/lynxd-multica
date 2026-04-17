@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/banner.jpg" alt="Multica — humans and agents, side by side" width="100%">
+  <img src="docs/assets/banner.jpg" alt="LYNXD AIOS — Get Lynxd. Your business runs itself." width="100%">
 </p>
 
 <div align="center">
@@ -7,10 +7,12 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/logo-light.svg">
-  <img alt="Multica" src="docs/assets/logo-light.svg" width="50">
+  <img alt="LYNXD AIOS" src="docs/assets/logo-light.svg" width="50">
 </picture>
 
-# Multica
+# LYNXD AIOS
+
+*Get Lynxd. Your business runs itself.*
 
 **Your next 10 hires won't be human.**
 
@@ -26,19 +28,19 @@ Turn coding agents into real teammates — assign tasks, track progress, compoun
 
 </div>
 
-## What is Multica?
+## What is LYNXD AIOS?
 
-Multica turns coding agents into real teammates. Assign issues to an agent like you'd assign to a colleague — they'll pick up the work, write code, report blockers, and update statuses autonomously.
+LYNXD AIOS turns coding agents into real teammates. Assign issues to an agent like you'd assign to a colleague — they'll pick up the work, write code, report blockers, and update statuses autonomously.
 
 No more copy-pasting prompts. No more babysitting runs. Your agents show up on the board, participate in conversations, and compound reusable skills over time. Think of it as open-source infrastructure for managed agents — vendor-neutral, self-hosted, and designed for human + AI teams. Works with **Claude Code**, **Codex**, **OpenClaw**, **OpenCode**, **Hermes**, **Gemini**, **Pi**, and **Cursor Agent**.
 
 <p align="center">
-  <img src="docs/assets/hero-screenshot.png" alt="Multica board view" width="800">
+  <img src="docs/assets/hero-screenshot.png" alt="LYNXD AIOS board view" width="800">
 </p>
 
 ## Features
 
-Multica manages the full agent lifecycle: from task assignment to execution monitoring to skill reuse.
+LYNXD AIOS manages the full agent lifecycle: from task assignment to execution monitoring to skill reuse.
 
 - **Agents as Teammates** — assign to an agent like you'd assign to a colleague. They have profiles, show up on the board, post comments, create issues, and report blockers proactively.
 - **Autonomous Execution** — set it and forget it. Full task lifecycle management (enqueue, claim, start, complete/fail) with real-time progress streaming via WebSocket.
@@ -64,7 +66,7 @@ Use `brew upgrade multica-ai/tap/multica` to keep the CLI current.
 curl -fsSL https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.sh | bash
 ```
 
-Use this if Homebrew is not available. The script installs the Multica CLI on macOS and Linux by using Homebrew when it is on `PATH`, otherwise it downloads the binary directly.
+Use this if Homebrew is not available. The script installs the LYNXD AIOS CLI on macOS and Linux by using Homebrew when it is on `PATH`, otherwise it downloads the binary directly.
 
 ### Windows (PowerShell)
 
@@ -75,10 +77,10 @@ irm https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.ps
 Then configure, authenticate, and start the daemon in one command:
 
 ```bash
-multica setup          # Connect to Multica Cloud, log in, start daemon
+multica setup          # Connect to LYNXD AIOS Cloud, log in, start daemon
 ```
 
-> **Self-hosting?** Add `--with-server` to deploy a full Multica server on your machine:
+> **Self-hosting?** Add `--with-server` to deploy a full LYNXD AIOS server on your machine:
 >
 > ```bash
 > curl -fsSL https://raw.githubusercontent.com/multica-ai/multica/main/scripts/install.sh | bash -s -- --with-server
@@ -101,9 +103,9 @@ The daemon runs in the background and auto-detects agent CLIs (`claude`, `codex`
 
 ### 2. Verify your runtime
 
-Open your workspace in the Multica web app. Navigate to **Settings → Runtimes** — you should see your machine listed as an active **Runtime**.
+Open your workspace in the LYNXD AIOS web app. Navigate to **Settings → Runtimes** — you should see your machine listed as an active **Runtime**.
 
-> **What is a Runtime?** A Runtime is a compute environment that can execute agent tasks. It can be your local machine (via the daemon) or a cloud instance. Each runtime reports which agent CLIs are available, so Multica knows where to route work.
+> **What is a Runtime?** A Runtime is a compute environment that can execute agent tasks. It can be your local machine (via the daemon) or a cloud instance. Each runtime reports which agent CLIs are available, so LYNXD AIOS knows where to route work.
 
 ### 3. Create an agent
 
@@ -115,9 +117,9 @@ Create an issue from the board (or via `multica issue create`), then assign it t
 
 ---
 
-## Multica vs Paperclip
+## LYNXD AIOS vs Paperclip
 
-| | Multica | Paperclip |
+| | LYNXD AIOS | Paperclip |
 |---|---------|-----------|
 | **Focus** | Team AI agent collaboration platform | Solo AI agent company simulator |
 | **User model** | Multi-user teams with roles & permissions | Single board operator |
@@ -126,20 +128,20 @@ Create an issue from the board (or via `multica issue create`), then assign it t
 | **Management depth** | Lightweight (Issues / Projects / Labels) | Heavy governance (Org chart / Approvals / Budgets) |
 | **Extensibility** | Skills system | Skills + Plugin system |
 
-**TL;DR — Multica is built for teams that want to collaborate with AI agents on real projects together.**
+**TL;DR — LYNXD AIOS is built for teams that want to collaborate with AI agents on real projects together.**
 
 ---
 
 ## CLI
 
-The `multica` CLI connects your local machine to Multica — authenticate, manage workspaces, and run the agent daemon.
+The `multica` CLI connects your local machine to LYNXD AIOS — authenticate, manage workspaces, and run the agent daemon.
 
 | Command | Description |
 |---------|-------------|
 | `multica login` | Authenticate (opens browser) |
 | `multica daemon start` | Start the local agent runtime |
 | `multica daemon status` | Check daemon status |
-| `multica setup` | One-command setup for Multica Cloud (configure + login + start daemon) |
+| `multica setup` | One-command setup for LYNXD AIOS Cloud (configure + login + start daemon) |
 | `multica setup self-host` | Same, but for self-hosted deployments |
 | `multica issue list` | List issues in your workspace |
 | `multica issue create` | Create a new issue |
@@ -173,7 +175,7 @@ See the [CLI and Daemon Guide](CLI_AND_DAEMON.md) for the full command reference
 
 ## Development
 
-For contributors working on the Multica codebase, see the [Contributing Guide](CONTRIBUTING.md).
+For contributors working on the LYNXD AIOS codebase, see the [Contributing Guide](CONTRIBUTING.md).
 
 **Prerequisites:** [Node.js](https://nodejs.org/) v20+, [pnpm](https://pnpm.io/) v10.28+, [Go](https://go.dev/) v1.26+, [Docker](https://www.docker.com/)
 

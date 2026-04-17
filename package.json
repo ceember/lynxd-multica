@@ -1,5 +1,7 @@
 {
-  "name": "multica",
+  "name": "lynxd-multica",
+  "productName": "LYNXD AIOS",
+  "publisher": "Infoportal Tech (Pty) Ltd",
   "version": "0.2.0",
   "private": true,
   "type": "module",

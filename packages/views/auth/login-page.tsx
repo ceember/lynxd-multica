@@ -288,7 +288,7 @@ export function LoginPage({
             {logo && <div className="mx-auto mb-4">{logo}</div>}
             <CardTitle className="text-2xl">Authorize CLI</CardTitle>
             <CardDescription>
-              Allow the CLI to access Multica as{" "}
+              Allow the CLI to access LYNXD AIOS as{" "}
               <span className="font-medium text-foreground">
                 {existingUser.email}
               </span>
@@ -397,7 +397,7 @@ export function LoginPage({
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           {logo && <div className="mx-auto mb-4">{logo}</div>}
-          <CardTitle className="text-2xl">Sign in to Multica</CardTitle>
+          <CardTitle className="text-2xl">Sign in to LYNXD AIOS</CardTitle>
           <CardDescription>
             Enter your email to get a login code
           </CardDescription>
