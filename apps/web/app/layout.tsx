@@ -6,6 +6,7 @@ import { cn } from "@multica/ui/lib/utils";
 import { WebProviders } from "@/components/web-providers";
 import { LocaleSync } from "@/components/locale-sync";
 import "./globals.css";
+import "../../../src/styles/lynxd-theme.css";
 
 // Font stack: Inter for Latin UI text + system Chinese fonts for zh content.
 // Desktop app uses the same stack via apps/desktop/src/renderer/src/globals.css —
@@ -52,8 +53,8 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.multica.ai"),
   title: {
-    default: "Multica — Project Management for Human + Agent Teams",
-    template: "%s | Multica",
+    default: "LYNXD AIOS — Project Management for Human + Agent Teams",
+    template: "%s | LYNXD AIOS",
   },
   description:
     "Open-source platform that turns coding agents into real teammates. Assign tasks, track progress, compound skills.",
@@ -63,7 +64,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    siteName: "Multica",
+    siteName: "LYNXD AIOS",
     locale: "en_US",
   },
   twitter: {

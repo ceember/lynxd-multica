@@ -1,0 +1,33 @@
+/* LYNXD AIOS Theme — Session 18 Wave 2 */
+:root {
+  --lynxd-charcoal: #2D2B28;
+  --lynxd-terracotta: #D97757;
+  --lynxd-bg: #FAF9F6;
+  --lynxd-surface: #F5F2ED;
+  --lynxd-card: #FFFFFF;
+  --lynxd-border: #E8E3DC;
+  --lynxd-text: #2D2B28;
+  --lynxd-muted: #6B6560;
+  --lynxd-success: #4CAF82;
+  --lynxd-warning: #E5A847;
+  --lynxd-error: #E05C4D;
+}
+
+[data-theme="dark"] {
+  --lynxd-bg: #1A1816;
+  --lynxd-surface: #2D2B28;
+  --lynxd-card: #2D2B28;
+  --lynxd-border: #3D3A37;
+  --lynxd-text: #E8E5DE;
+}
+
+body {
+  background: var(--lynxd-bg);
+  color: var(--lynxd-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.lynxd-accent { color: var(--lynxd-terracotta); }
+.lynxd-card { background: var(--lynxd-card); border: 1px solid var(--lynxd-border); border-radius: 8px; }
+.lynxd-button-primary { background: var(--lynxd-terracotta); color: white; border: none; padding: 8px 16px; border-radius: 6px; }
+.lynxd-button-primary:hover { filter: brightness(1.1); }
