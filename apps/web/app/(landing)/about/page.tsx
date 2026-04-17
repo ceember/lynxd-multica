@@ -4,7 +4,7 @@ import { AboutPageClient } from "@/features/landing/components/about-page-client
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn about LYNXD AIOS — multiplexed information and computing agent. An open-source project management platform for human + agent teams.",
+    "LYNXD AIOS by Infoportal Tech. Your AI-powered business operations.",
   openGraph: {
     title: "About LYNXD AIOS",
     description:

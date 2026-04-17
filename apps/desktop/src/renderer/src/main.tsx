@@ -7,5 +7,6 @@ import "@fontsource-variable/inter";
 import "@fontsource/geist-mono/400.css";
 import "@fontsource/geist-mono/700.css";
 import "./globals.css";
+import "../../../../../src/styles/lynxd-theme.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(<App />);

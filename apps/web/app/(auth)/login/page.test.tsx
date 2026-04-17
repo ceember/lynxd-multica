@@ -64,7 +64,7 @@ describe("LoginPage", () => {
   it("renders login form with email input and continue button", () => {
     render(<LoginPage />, { wrapper: createWrapper() });
 
-    expect(screen.getByText("Sign in to Multica")).toBeInTheDocument();
+    expect(screen.getByText("Sign in to LYNXD AIOS")).toBeInTheDocument();
     expect(screen.getByText("Enter your email to get a login code")).toBeInTheDocument();
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(
